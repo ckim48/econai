@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% extends "base.html" %}
+{% block content %}
+<h1 class="text-center">Add Record</h1>
+<form method="post" class="row g-3">
+    <div class="col-md-6">
+        <label for="category" class="form-label">Category</label>
+        <input type="text" name="category" id="category" class="form-control" required>
+    </div>
+    <div class="col-md-6">
+        <label for="amount" class="form-label">Amount</label>
+        <input type="number" name="amount" id="amount" class="form-control" required>
+    </div>
+    <div class="col-md-6">
+        <label for="type" class="form-label">Type</label>
+        <select name="type" id="type" class="form-select" required>
+            <option value="Income">Income</option>
+            <option value="Expense">Expense</option>
+        </select>
+    </div>
+    <div class="col-md-6">
+        <label for="date" class="form-label">Date</label>
+        <input type="text" name="date" id="date" class="form-control" required>
+    </div>
+    <div class="col-12">
+        <label for="description" class="form-label">Description</label>
+        <input type="text" name="description" id="description" class="form-control">
+    </div>
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary">Add</button>
+    </div>
+</form>
+{% endblock %}
+</title>
+</head>
+<body>
+
+</body>
+</html>

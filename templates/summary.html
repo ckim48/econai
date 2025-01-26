@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-center">Summary</h1>
+<div class="card text-center">
+    <div class="card-body">
+        <h5 class="card-title">Income: ${{ income }}</h5>
+        <h5 class="card-title">Expenses: ${{ expense }}</h5>
+        <h5 class="card-title">Balance: ${{ balance }}</h5>
+    </div>
+</div>
+{% endblock %}
