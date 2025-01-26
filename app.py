@@ -214,6 +214,36 @@ def logout():
     flash('Logged out successfully.', 'info')
     return redirect(url_for('login'))
 
+@app.route('/add_record', methods=['POST'])
+def add_record():
+    """Add a new record to the database."""
+    if not session.get('username'):
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+
+    data = request.json
+    username = session['username']
+    record_type = data.get('type')
+    category = data.get('category')
+    amount = data.get('amount')
+    description = data.get('description', '')
+    date = data.get('date')
+
+    if not (record_type and category and amount and date):
+        return jsonify({"status": "error", "message": "Missing required fields"}), 400
+
+    try:
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO budgets (username, category, amount, type, description, date)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (username, category, amount, record_type, description, date))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success", "message": "Record added successfully"})
+    except Exception as e:
+        print(e)
+        return jsonify({"status": "error", "message": "Failed to add record"}), 500
 
 if __name__ == '__main__':
     init_db()

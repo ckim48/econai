@@ -111,7 +111,9 @@
     .fc-h-event .fc-event-main{
         color: black;
     }
-
+a.fc-event{
+    cursor:pointer;
+}
 </style>
 <div class="container mt-5">
     <h1 class="text-center mb-5 text-gradient">👋 Hello, {{ username }}</h1>
@@ -141,6 +143,7 @@
                 </div>
             </div>
         </div>
+
     </div>
 
     <!-- Transaction and Calendar -->
@@ -163,19 +166,22 @@
                         <th scope="col" class="py-3" style="width: 20%;">Date</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for record in records %}
-                    <tr>
-                        <td class="fw-bold text-primary">{{ record.type }}</td>
-                        <td>{{ record.category }}</td>
-                        <td class="text-{{ 'success' if record.type == 'Income' else 'danger' }} fw-bold">
-                            ${{ record.amount }}
-                        </td>
-                        <td class="text-muted">{{ record.description }}</td>
-                        <td>{{ record.date }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
+               <tbody>
+                {% for record in records %}
+                <tr>
+                    <td class="fw-bold text-primary">{{ record.type }}</td>
+                    <td>{{ record.category }}</td>
+                    <td class="text-{{ 'success' if record.type == 'Income' else 'danger' }} fw-bold">
+                        ${{ record.amount }}
+                    </td>
+                    <td class="text-muted">
+                        {{ record.description if record.description.strip() else 'No description' }}
+                    </td>
+                    <td>{{ record.date }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
             </table>
         </div>
     </div>
@@ -271,18 +277,39 @@
         </div>
     </div>
 </div>
+<!-- Add Modal for Viewing Event Details -->
+<div class="modal fade" id="eventDetailModal" tabindex="-1" aria-labelledby="eventDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient text-white">
+                <h5 class="modal-title" id="eventDetailModalLabel">Event Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Type:</strong> <span id="eventType"></span></p>
+                <p><strong>Category:</strong> <span id="eventCategory"></span></p>
+                <p><strong>Amount:</strong> <span id="eventAmount"></span></p>
+                <p><strong>Description:</strong> <span id="eventDescription"></span></p>
+                <p><strong>Date:</strong> <span id="eventDate"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- FullCalendar Integration -->
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
- const calendarEl = document.getElementById('calendar');
+  const calendarEl = document.getElementById('calendar');
     const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            right: 'dayGridMonth,timeGridWeek,timeGridDay',
         },
         events: [
             {% for record in records %}
@@ -290,37 +317,29 @@ document.addEventListener('DOMContentLoaded', function () {
                 title: "{{ record.type }}: ${{ record.amount }}",
                 start: "{{ record.date }}",
                 description: "{{ record.description }}",
+                type: "{{ record.type }}",
+                category: "{{ record.category }}",
+                amount: "{{ record.amount }}",
                 className: "{{ 'income-event' if record.type == 'Income' else 'expense-event' }}"
             },
             {% endfor %}
-        ]
+        ],
+        eventClick: function (info) {
+            // Populate the modal with event details
+            document.getElementById('eventType').textContent = info.event.extendedProps.type;
+            document.getElementById('eventCategory').textContent = info.event.extendedProps.category;
+            document.getElementById('eventAmount').textContent = `$${info.event.extendedProps.amount}`;
+            document.getElementById('eventDescription').textContent = info.event.extendedProps.description || 'No description';
+            document.getElementById('eventDate').textContent = info.event.start.toISOString().split('T')[0];
+
+            // Show the modal
+            const eventDetailModal = new bootstrap.Modal(document.getElementById('eventDetailModal'));
+            eventDetailModal.show();
+        },
     });
     calendar.render();
 
 
-    // Save Record Button Handler
-    document.getElementById('saveRecordBtn').addEventListener('click', () => {
-        const type = document.getElementById('recordType').value;
-        const category = document.getElementById('recordCategory').value;
-        const amount = document.getElementById('recordAmount').value;
-        const description = document.getElementById('recordDescription').value;
-        const date = document.getElementById('recordDate').value;
-
-        if (type && category && amount && date) {
-            fetch('/add_record', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type, category, amount, description, date })
-            }).then(response => response.json()).then(data => {
-                if (data.status === 'success') {
-                    alert('Record added successfully!');
-                    location.reload();
-                } else {
-                    alert('Failed to add record.');
-                }
-            });
-        }
-    });
 
    const chatBtn = document.getElementById('chatBtn');
     const chatBox = document.getElementById('chatBox');
@@ -390,6 +409,36 @@ document.addEventListener('DOMContentLoaded', function () {
             sendMessage(); // Call the sendMessage function
         }
     });
+});
+
+</script>
+<script>
+    document.getElementById('saveRecordBtn').addEventListener('click', () => {
+    const type = document.getElementById('recordType').value;
+    const category = document.getElementById('recordCategory').value;
+    const amount = document.getElementById('recordAmount').value;
+    const description = document.getElementById('recordDescription').value;
+    const date = document.getElementById('recordDate').value;
+
+    if (type && category && amount && date) {
+        fetch('/add_record', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type, category, amount, description, date })
+        }).then(response => response.json()).then(data => {
+            if (data.status === 'success') {
+                alert('Record added successfully!');
+                location.reload(); // Refresh the page to show the updated data
+            } else {
+                alert(`Failed to add record: ${data.message}`);
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while adding the record.');
+        });
+    } else {
+        alert('Please fill in all required fields.');
+    }
 });
 
 </script>
