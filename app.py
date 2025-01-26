@@ -162,21 +162,20 @@ def chat():
     return jsonify({"reply": reply})
 
 
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    """Handle user login."""
+    """Handle user login without password hashing."""
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
 
         conn = sqlite3.connect(DATABASE)
         cursor = conn.cursor()
-        cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
+        cursor.execute('SELECT * FROM users WHERE username = ? AND password = ?', (username, password))
         user = cursor.fetchone()
         conn.close()
 
-        if user and check_password_hash(user[2], password):
+        if user:
             session['username'] = username
             flash('Login successful!', 'success')
             return redirect(url_for('index'))
@@ -185,10 +184,9 @@ def login():
 
     return render_template('login.html')
 
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    """Handle user registration."""
+    """Handle user registration without password hashing."""
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -196,8 +194,7 @@ def register():
         conn = sqlite3.connect(DATABASE)
         cursor = conn.cursor()
         try:
-            hashed_password = generate_password_hash(password)
-            cursor.execute('INSERT INTO users (username, password) VALUES (?, ?)', (username, hashed_password))
+            cursor.execute('INSERT INTO users (username, password) VALUES (?, ?)', (username, password))
             conn.commit()
             flash('Registration successful!', 'success')
             return redirect(url_for('login'))
@@ -207,6 +204,7 @@ def register():
             conn.close()
 
     return render_template('register.html')
+
 
 
 @app.route('/logout')
