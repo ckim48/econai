@@ -81,6 +81,36 @@
     .fc-daygrid-day:hover .fc-daygrid-day-number {
         text-decoration: none !important; /* Ensure no underline on hover */
     }
+/* Default Button Style */
+.tab-btn {
+    background: white;
+    border: 1px solid  #5468ff;
+    color: #5468ff;
+    font-weight: bold;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 50px;
+    transition: all 0.3s ease-in-out;
+    margin: 5px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    font-size: 16px;
+    cursor: pointer;
+}
+
+/* Active Button Style */
+.active-tab {
+    background: linear-gradient(90deg, #28a745, #218838);
+    box-shadow: 0px 4px 8px rgba(40, 167, 69, 0.3);
+    transform: scale(1.05);
+    color: white;
+}
+
+/* Hover Effect */
+.tab-btn:hover {
+    opacity: 0.9;
+    transform: scale(1.05);
+}
+
 
     /* Additional Customization (optional) */
     .fc-daygrid-day {
@@ -114,93 +144,294 @@
 a.fc-event{
     cursor:pointer;
 }
+.section-title {
+    text-align: center;
+    font-size: 31px;
+    font-weight: bold;
+    margin-top: 40px;
+    padding-bottom: 10px;
+    letter-spacing: 0.5px;
+    display: inline-block;
+    position: relative;
+}
+
+/* Add a small accent underline effect */
+.section-title::after {
+    content: "";
+    display: block;
+    width: 50px;
+    height: 4px;
+    background-color:  #5468ff;
+    margin: 8px auto 0;
+    border-radius: 2px;
+}
+#calendar-container {
+    max-width: 65%;
+    margin: 0 auto; /* Centers the calendar */
+}
+#calendar-container {
+    max-width: 70%;
+    margin: 0 auto; /* Center the calendar */
+}
+
+#calendar {
+    width: 100%;
+}
+/* Ensures all chart cards have the same size */
+.chart-card {
+    width: 100%;
+    height: 400px; /* Set a consistent height */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
+    background: white;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Ensure chart canvas adapts properly */
+.chart-card canvas {
+    max-width: 100% !important;
+    max-height: 100% !important;
+    width: auto;
+    height: 300px !important; /* Ensure all charts have the same height */
+}
+
+/* Responsive tweaks */
+@media (max-width: 992px) {
+    .chart-card {
+        height: 350px; /* Reduce height for smaller screens */
+    }
+}
+
+@media (max-width: 768px) {
+    .chart-card {
+        height: 320px; /* Further reduce height */
+    }
+}
+
 </style>
 <div class="container mt-5">
-    <h1 class="text-center mb-5 text-gradient">👋 Hello, {{ username }}</h1>
-    <div class="row g-4">
-        <!-- Balance Card -->
-        <div class="col-lg-12 d-flex justify-content-center">
-            <div class="card shadow-lg border-0 position-relative mx-auto" style="width: 100%; max-width: 400px; background-color: #fdfdfd;">
-                <button
-                    class="btn btn-gradient btn-sm rounded-pill shadow-sm position-absolute top-0 end-0 m-3"
-                    data-bs-toggle="modal"
-                    data-bs-target="#addRecordModal">
-                    + Add Record
+    <h1 class="text-center mb-5 text-gradient">Financial overview for {{ fullname }}</h1>
+<div class="row g-4">
+    <!-- Left Column: Balance Card + Add Record -->
+    <div class="col-lg-4 d-flex justify-content-center">
+        <div class="card shadow-lg border-0 position-relative mx-auto" style="width: 100%; max-width: 350px; background-color: #fdfdfd;">
+            <div class="card-body text-center">
+                <h5 class="text-muted">Total Balance</h5>
+                <h2 class="text-gradient fw-bold">${{ balance }}</h2>
+                <div class="d-flex justify-content-around mt-4">
+                    <div>
+                        <h6 class="text-muted">Income</h6>
+                        <p class="text-success fw-bold">${{ income }}</p>
+                    </div>
+                    <div>
+                        <h6 class="text-muted">Expense</h6>
+                        <p class="text-danger fw-bold">${{ expense }}</p>
+                    </div>
+                </div>
+                            <button
+                class="btn btn-gradient btn-sm rounded-pill shadow-sm m-3"
+                data-bs-toggle="modal"
+                data-bs-target="#addRecordModal">
+                + Add Record
+            </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Middle Column: Goal Progress -->
+    <div class="col-lg-4 d-flex justify-content-center">
+        <div class="card shadow-lg border-0 mx-auto" style="width: 100%; max-width: 350px; background-color: #fdfdfd;">
+            <div class="card-body text-center">
+                <h5 class="text-muted">💰 Savings Goal</h5>
+                <h2 class="fw-bold text-primary">$<span id="goalAmount">{{ goal_amount }}</span></h2>
+                <p class="text-muted small">Your progress towards your financial goal</p>
+
+                <!-- Progress Bar -->
+                <div class="progress" style="height: 20px;">
+                    <div
+                        id="goalProgressBar"
+                        class="progress-bar bg-success"
+                        role="progressbar"
+                        style="width: {{ progress_percentage }}%;"
+                        aria-valuenow="{{ progress_percentage }}"
+                        aria-valuemin="0"
+                        aria-valuemax="100">
+                        {{ progress_percentage }}%
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <p id="goalMessage" class="fw-bold text-{{ 'success' if balance >= goal_amount else 'danger' }}">
+                        {{ "You're on track! 🎉" if balance >= goal_amount else "Keep going! 💪" }}
+                    </p>
+                </div>
+
+                <!-- Button to Open Goal Setting Modal -->
+                <button class="btn btn-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#setGoalModal">
+                    Set Goal
                 </button>
-                <div class="card-body text-center">
-                    <h5 class="text-muted">Total Balance</h5>
-                    <h2 class="text-gradient fw-bold">${{ balance }}</h2>
-                    <div class="d-flex justify-content-around mt-4">
-                        <div>
-                            <h6 class="text-muted">Income</h6>
-                            <p class="text-success fw-bold">${{ income }}</p>
-                        </div>
-                        <div>
-                            <h6 class="text-muted">Expense</h6>
-                            <p class="text-danger fw-bold">${{ expense }}</p>
-                        </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Spending Insights -->
+    <div class="col-lg-4 d-flex justify-content-center">
+        <div class="card shadow-lg border-0 mx-auto" style="width: 100%; max-width: 350px; background-color: #fdfdfd;">
+            <div class="card-body text-center">
+                <h5 class="text-muted">📊 Top Expense Category</h5>
+                <h2 class="fw-bold text-danger mt-4" id="topExpenseCategory">Loading...</h2>
+                <p class="text-muted small">Your highest spending category</p>
+
+                <button class="btn btn-danger btn-sm mt-2" onclick="showSpendingDetails()">View Insights</button>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Set Goal Modal -->
+<div class="modal fade" id="setGoalModal" tabindex="-1" aria-labelledby="setGoalModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient text-white">
+                <h5 class="modal-title" id="setGoalModalLabel">Set Your Savings Goal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="setGoalForm">
+                    <div class="mb-3">
+                        <label for="goalInput" class="form-label">Enter Your Goal Amount ($)</label>
+                                                <input type="number" class="form-control" id="goalInput" placeholder="Enter amount" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveGoalBtn">Save Goal</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="d-flex justify-content-center mt-4">
+    <h3 class="section-title">Your Financial Overview</h3>
+</div>
+
+<div class="row mt-4">
+    <div class="col-lg-12 d-flex justify-content-center">
+        <div class="btn-group" role="group">
+            <button class="tab-btn active" id="transactions-tab-btn" type="button">
+                📊 Transactions
+            </button>
+            <button class="tab-btn" id="calendar-tab-btn" type="button">
+                📅 Calendar
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- Transactions and Calendar Section -->
+<div class="row g-4 mt-3">
+    <div class="col-lg-12">
+        <div class="card supard shadow-lg border-0 mb-5 d-block mx-auto" style="width:81%;">
+            <div class="card-body">
+                <!-- Transactions Table Tab -->
+                <div id="transactions-section">
+<table class="table table-hover table-striped mb-0 align-middle">
+    <thead class="sticky-top bg-gradient text-white">
+        <tr>
+            <th scope="col" class="py-3 sortable" data-column="type">Type ⬍</th>
+            <th scope="col" class="py-3 sortable" data-column="category">Category ⬍</th>
+            <th scope="col" class="py-3 sortable" data-column="amount">Amount ⬍</th>
+            <th scope="col" class="py-3 sortable" data-column="description">Description ⬍</th>
+            <th scope="col" class="py-3 sortable" data-column="date">Date ⬍</th>
+        </tr>
+    </thead>
+    <tbody id="transactionTable">
+        {% for record in records[:7] %} <!-- Show only first 7 rows initially -->
+        <tr>
+            <td class="fw-bold text-primary">{{ record.type }}</td>
+            <td>{{ record.category }}</td>
+            <td class="text-{{ 'success' if record.type == 'Income' else 'danger' }} fw-bold">
+                ${{ record.amount }}
+            </td>
+            <td class="text-muted">
+                {{ record.description if record.description.strip() else 'No description' }}
+            </td>
+            <td>{{ record.date }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- View More Button -->
+<div class="text-center mt-3">
+    <button id="viewMoreBtn" class="btn btn-primary">View More</button>
+</div>
+                </div>
+
+                <!-- Calendar View Tab -->
+                <div id="calendar-section" class="d-none">
+                    <div id="calendar-container">
+                        <div id="calendar" class="rounded border mt-3"></div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
+</div>
 
+<div class="row mt-4">
+    <div class="col-lg-6 col-md-12 d-flex">
+        <div class="chart-card card shadow-lg border-0">
+            <div class="card-body">
+                <h5 class="card-title text-center fw-bold mb-3">Income vs. Expenses</h5>
+                <canvas id="incomeExpenseChart"></canvas>
+            </div>
+        </div>
     </div>
 
-    <!-- Transaction and Calendar -->
-    <div class="row g-4 mt-4">
-        <!-- Transaction Table -->
-<!-- Transaction Table -->
-<div class="col-lg-5">
-    <div class="card shadow-lg border-0">
-        <div class="card-header bg-gradient text-white">
-            <h5 class="mb-0">Transaction Records</h5>
+    <div class="col-lg-6 col-md-12 d-flex">
+        <div class="chart-card card shadow-lg border-0">
+            <div class="card-body">
+                <h5 class="card-title text-center fw-bold mb-3">Category-wise Expense Breakdown</h5>
+                <canvas id="categoryExpenseChart"></canvas>
+            </div>
         </div>
-        <div class="card-body p-0">
-            <table class="table table-hover table-striped mb-0 align-middle">
-                <thead class="sticky-top bg-gradient text-white">
-                    <tr>
-                        <th scope="col" class="py-3" style="width: 10%;">Type</th>
-                        <th scope="col" class="py-3" style="width: 20%;">Category</th>
-                        <th scope="col" class="py-3" style="width: 20%;">Amount</th>
-                        <th scope="col" class="py-3" style="width: 30%;">Description</th>
-                        <th scope="col" class="py-3" style="width: 20%;">Date</th>
-                    </tr>
-                </thead>
-               <tbody>
-                {% for record in records %}
-                <tr>
-                    <td class="fw-bold text-primary">{{ record.type }}</td>
-                    <td>{{ record.category }}</td>
-                    <td class="text-{{ 'success' if record.type == 'Income' else 'danger' }} fw-bold">
-                        ${{ record.amount }}
-                    </td>
-                    <td class="text-muted">
-                        {{ record.description if record.description.strip() else 'No description' }}
-                    </td>
-                    <td>{{ record.date }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
+    </div>
+</div>
 
-            </table>
+<div class="row mt-4">
+    <div class="col-lg-6 col-md-12 d-flex">
+        <div class="chart-card card shadow-lg border-0">
+            <div class="card-body">
+                <h5 class="card-title text-center fw-bold mb-3">Monthly Expense Trend</h5>
+                <canvas id="monthlyExpenseChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 col-md-12 d-flex">
+        <div class="chart-card card shadow-lg border-0">
+            <div class="card-body">
+                <h5 class="card-title text-center fw-bold mb-3">Savings Progress</h5>
+                <canvas id="savingsProgressChart"></canvas>
+            </div>
         </div>
     </div>
 </div>
 
 
 
-        <!-- Calendar -->
-        <div class="col-lg-7">
-            <div class="card shadow-lg border-0">
-                <div class="card-header bg-gradient text-white">
-                    <h5 class="mb-0">Calendar</h5>
-                </div>
-                <div class="card-body">
-                    <div id="calendar" class="rounded border mt-3" style="background-color: #fdfdfd;"></div>
-                </div>
-            </div>
-        </div>
-    </div>
+
 </div>
 
 <!-- Bootstrap Modal for Adding Record -->
@@ -245,6 +476,8 @@ a.fc-event{
         </div>
     </div>
 </div>
+
+
 
 <!-- Chat Button -->
 <div id="chat-container" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">
@@ -301,8 +534,96 @@ a.fc-event{
 
 <!-- FullCalendar Integration -->
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+
+
+
+<!-- FullCalendar Integration -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const transactionsTabBtn = document.getElementById('transactions-tab-btn');
+    const calendarTabBtn = document.getElementById('calendar-tab-btn');
+
+    // Sections
+    const transactionsSection = document.getElementById('transactions-section');
+    const calendarSection = document.getElementById('calendar-section');
+
+    // Ensure Transactions is active by default
+    transactionsTabBtn.classList.add('active-tab');
+    transactionsSection.classList.remove('d-none'); // Ensure it's visible
+    calendarSection.classList.add('d-none'); // Hide Calendar by default
+
+    // Initialize FullCalendar
+    const calendarEl = document.getElementById('calendar');
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        height: "auto", // Dynamically adjust height
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay',
+        },
+        events: [
+            {% for record in records %}
+            {
+                title: "{{ record.type }}: ${{ record.amount }}",
+                start: "{{ record.date }}",
+                description: "{{ record.description }}",
+                type: "{{ record.type }}",
+                category: "{{ record.category }}",
+                amount: "{{ record.amount }}",
+                className: "{{ 'income-event' if record.type == 'Income' else 'expense-event' }}"
+            },
+            {% endfor %}
+        ],
+        eventClick: function (info) {
+            document.getElementById('eventType').textContent = info.event.extendedProps.type;
+            document.getElementById('eventCategory').textContent = info.event.extendedProps.category;
+            document.getElementById('eventAmount').textContent = `$${info.event.extendedProps.amount}`;
+            document.getElementById('eventDescription').textContent = info.event.extendedProps.description || 'No description';
+            document.getElementById('eventDate').textContent = info.event.start.toISOString().split('T')[0];
+
+            const eventDetailModal = new bootstrap.Modal(document.getElementById('eventDetailModal'));
+            eventDetailModal.show();
+        },
+    });
+    calendar.render();
+
+    // Function to switch views and fix calendar sizing
+    function switchTab(activeTab, inactiveTab, showSection, hideSection) {
+        // Switch visibility
+        showSection.classList.remove('d-none');
+        hideSection.classList.add('d-none');
+
+        // Toggle active button styles
+        activeTab.classList.add('active-tab');
+        inactiveTab.classList.remove('active-tab');
+
+        // Ensure Calendar resizes properly
+        if (activeTab === calendarTabBtn) {
+            setTimeout(() => {
+                calendar.updateSize();
+            }, 200);
+        }
+    }
+
+    // Attach click events
+    transactionsTabBtn.addEventListener('click', function () {
+        switchTab(transactionsTabBtn, calendarTabBtn, transactionsSection, calendarSection);
+    });
+
+    calendarTabBtn.addEventListener('click', function () {
+        switchTab(calendarTabBtn, transactionsTabBtn, calendarSection, transactionsSection);
+    });
+});
+
+
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
   const calendarEl = document.getElementById('calendar');
     const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
@@ -441,5 +762,267 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
+</script>
+
+<script>
+document.getElementById('saveGoalBtn').addEventListener('click', () => {
+    const newGoal = document.getElementById('goalInput').value;
+
+    if (!newGoal || newGoal <= 0) {
+        alert("Please enter a valid goal amount.");
+        return;
+    }
+
+    fetch('/set_goal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ goal_amount: newGoal })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "success") {
+            // Update UI
+            document.getElementById('goalAmount').innerText = newGoal;
+            document.getElementById('goalProgressBar').style.width = `${data.progress_percentage}%`;
+            document.getElementById('goalProgressBar').innerText = `${data.progress_percentage}%`;
+
+            // Update goal message
+            const goalMessage = document.getElementById('goalMessage');
+            if (data.progress_percentage >= 100) {
+                goalMessage.innerText = "You're on track! 🎉";
+                goalMessage.classList.remove("text-danger");
+                goalMessage.classList.add("text-success");
+            } else {
+                goalMessage.innerText = "Keep going! 💪";
+                goalMessage.classList.remove("text-success");
+                goalMessage.classList.add("text-danger");
+            }
+
+            // Close the modal
+            const goalModal = new bootstrap.Modal(document.getElementById('setGoalModal'));
+            goalModal.hide();
+        } else {
+            alert("Failed to update goal. Try again.");
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        alert("An error occurred while updating the goal.");
+    });
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", async function () {
+    try {
+        const response = await fetch("/get_budget_data");
+        const data = await response.json();
+
+        if (data.status !== "success") {
+            console.error("Error fetching budget data");
+            return;
+        }
+
+        const { income, expense, categories, category_expenses, monthly_expenses, goal_amount, balance } = data;
+
+        // ✅ 1. Income vs. Expense Chart
+        new Chart(document.getElementById("incomeExpenseChart"), {
+            type: "bar",
+            data: {
+                labels: ["Income", "Expenses"],
+                datasets: [{
+                    label: "Amount ($)",
+                    data: [income, expense],
+                    backgroundColor: ["#28a745", "#dc3545"]
+                }]
+            },
+            options: { responsive: true }
+        });
+
+        // ✅ 2. Category-wise Expense Breakdown (Pie Chart)
+        new Chart(document.getElementById("categoryExpenseChart"), {
+            type: "pie",
+            data: {
+                labels: categories,
+                datasets: [{
+                    data: category_expenses,
+                    backgroundColor: ["#ff6384", "#36a2eb", "#ffce56", "#4bc0c0", "#9966ff"]
+                }]
+            },
+            options: { responsive: true }
+        });
+
+        // ✅ 3. Monthly Expense Trend (Line Chart)
+        new Chart(document.getElementById("monthlyExpenseChart"), {
+            type: "line",
+            data: {
+                labels: Object.keys(monthly_expenses),
+                datasets: [{
+                    label: "Monthly Expenses ($)",
+                    data: Object.values(monthly_expenses),
+                    borderColor: "#ff6384",
+                    fill: false
+                }]
+            },
+            options: { responsive: true }
+        });
+
+        // ✅ 4. Savings Progress (Doughnut Chart)
+        new Chart(document.getElementById("savingsProgressChart"), {
+            type: "doughnut",
+            data: {
+                labels: ["Saved", "Remaining"],
+                datasets: [{
+                    data: [balance, goal_amount - balance > 0 ? goal_amount - balance : 0],
+                    backgroundColor: ["#28a745", "#f8d7da"]
+                }]
+            },
+            options: { responsive: true }
+        });
+
+    } catch (error) {
+        console.error("Error loading dashboard data", error);
+    }
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const viewMoreBtn = document.getElementById("viewMoreBtn");
+    const transactionTable = document.getElementById("transactionTable");
+
+    let allRecordsLoaded = false; // Track if all records are displayed
+
+    viewMoreBtn.addEventListener("click", function () {
+        if (!allRecordsLoaded) {
+            fetch('/get_budget_data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "success" && Array.isArray(data.records)) {  // ✅ Check if records exist
+                        const allRecords = data.records;
+                        let tableContent = "";
+
+                        allRecords.forEach(record => {
+                            tableContent += `
+                                <tr>
+                                    <td class="fw-bold text-primary">${record.type}</td>
+                                    <td>${record.category}</td>
+                                    <td class="text-${record.type === 'Income' ? 'success' : 'danger'} fw-bold">
+                                        $${record.amount}
+                                    </td>
+                                    <td class="text-muted">${record.description ? record.description : 'No description'}</td>
+                                    <td>${record.date}</td>
+                                </tr>
+                            `;
+                        });
+
+                        transactionTable.innerHTML = tableContent;
+                        viewMoreBtn.style.display = "none"; // Hide the button after loading all records
+                        allRecordsLoaded = true;
+                    } else {
+                        console.error("No records found or invalid response.");
+                        alert("No additional records to display.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching data:", error);
+                    alert("An error occurred while fetching records.");
+                });
+        }
+    });
+});
+
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const transactionTable = document.getElementById("transactionTable");
+    const headers = document.querySelectorAll(".sortable");
+
+    let sortColumn = null;
+    let sortAscending = true;
+
+    headers.forEach(header => {
+        header.addEventListener("click", function () {
+            const column = this.dataset.column;
+
+            if (sortColumn === column) {
+                sortAscending = !sortAscending; // Toggle sorting direction
+            } else {
+                sortColumn = column;
+                sortAscending = true;
+            }
+
+            sortTable(column, sortAscending);
+            updateHeaderIcons();
+        });
+    });
+
+    function sortTable(column, ascending) {
+        let rows = Array.from(transactionTable.rows);
+
+        rows.sort((a, b) => {
+            let aVal = a.cells[getColumnIndex(column)].innerText.trim();
+            let bVal = b.cells[getColumnIndex(column)].innerText.trim();
+
+            if (column === "amount") {
+                aVal = parseFloat(aVal.replace("$", "")) || 0;
+                bVal = parseFloat(bVal.replace("$", "")) || 0;
+            } else if (column === "date") {
+                aVal = new Date(aVal);
+                bVal = new Date(bVal);
+            } else {
+                aVal = aVal.toLowerCase();
+                bVal = bVal.toLowerCase();
+            }
+
+            return ascending ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
+        });
+
+        transactionTable.innerHTML = "";
+        rows.forEach(row => transactionTable.appendChild(row));
+    }
+
+    function getColumnIndex(column) {
+        const columnMap = {
+            "type": 0,
+            "category": 1,
+            "amount": 2,
+            "description": 3,
+            "date": 4
+        };
+        return columnMap[column];
+    }
+
+    function updateHeaderIcons() {
+        headers.forEach(header => {
+            const column = header.dataset.column;
+            let baseText = header.innerText.replace(/ ⬆| ⬇| ⬍/g, ""); // Remove existing icons
+
+            if (column === sortColumn) {
+                header.innerText = baseText + (sortAscending ? " ⬆" : " ⬇"); // Set correct icon
+            } else {
+                header.innerText = baseText + " ⬍"; // Default state
+            }
+        });
+    }
+});
+
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+    fetch('/get_budget_data')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "success" && data.categories.length > 0) {
+                let highestExpenseIndex = data.category_expenses.indexOf(Math.max(...data.category_expenses));
+                let topCategory = data.categories[highestExpenseIndex];
+
+                document.getElementById("topExpenseCategory").innerText = topCategory;
+            } else {
+                document.getElementById("topExpenseCategory").innerText = "No Data Available";
+            }
+        })
+        .catch(error => console.error("Error fetching data:", error));
+});
 </script>
 {% endblock %}

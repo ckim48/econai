@@ -67,15 +67,23 @@ def init_db():
     conn.commit()
     conn.close()
 
-
 @app.route('/')
 def index():
+    return render_template('landing.html')
+
+
+@app.route('/main')
+def main():
     """Render the main dashboard with balance and records."""
     if 'username' not in session:
         return redirect(url_for('login'))
+
     username = session['username']
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
+    cursor.execute('SELECT fullname FROM users WHERE username = ?', (username,))
+    user_data = cursor.fetchone()
+    fullname = user_data[0] if user_data else username  # Default to username if full name is not found
 
     # Fetch budgets
     cursor.execute('SELECT type, SUM(amount) FROM budgets WHERE username = ? GROUP BY type', (username,))
@@ -83,6 +91,10 @@ def index():
     income = sum(amount for t, amount in budget_data if t == 'Income')
     expense = sum(amount for t, amount in budget_data if t == 'Expense')
     balance = income - expense
+
+    # Set a goal amount (you can modify this to be user-defined)
+    goal_amount = 500  # Example: Set a default goal
+    progress_percentage = min(int((balance / goal_amount) * 100), 100)
 
     # Fetch all records for the calendar
     cursor.execute('SELECT type, category, amount, description, date FROM budgets WHERE username = ?', (username,))
@@ -97,7 +109,109 @@ def index():
     ]
 
     conn.close()
-    return render_template('index.html', balance=balance, income=income, expense=expense, records=records, username=username)
+    return render_template(
+        'index.html',
+        balance=balance,
+        income=income,
+        expense=expense,
+        records=records,
+        username=username,
+        goal_amount=goal_amount,
+        fullname= fullname,
+        progress_percentage=progress_percentage
+    )
+@app.route('/set_goal', methods=['POST'])
+def set_goal():
+    """Update the user's goal amount and return progress."""
+    if 'username' not in session:
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+
+    data = request.json
+    new_goal = data.get('goal_amount')
+
+    if not new_goal or float(new_goal) <= 0:
+        return jsonify({"status": "error", "message": "Invalid goal amount"}), 400
+
+    new_goal = float(new_goal)
+
+    # Fetch user balance
+    username = session['username']
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute('SELECT type, SUM(amount) FROM budgets WHERE username = ? GROUP BY type', (username,))
+    budget_data = cursor.fetchall()
+    conn.close()
+
+    income = sum(amount for t, amount in budget_data if t == 'Income')
+    expense = sum(amount for t, amount in budget_data if t == 'Expense')
+    balance = income - expense
+
+    # Calculate new progress percentage
+    progress_percentage = min(int((balance / new_goal) * 100), 100)
+
+    return jsonify({"status": "success", "goal_amount": new_goal, "progress_percentage": progress_percentage})
+
+
+@app.route('/get_budget_data')
+def get_budget_data():
+    """Fetch financial data for the dashboard charts."""
+    if 'username' not in session:
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+
+    username = session['username']
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+
+    # Fetch income & expense totals
+    cursor.execute('SELECT type, SUM(amount) FROM budgets WHERE username = ? GROUP BY type', (username,))
+    budget_data = cursor.fetchall()
+
+    income = sum(amount for t, amount in budget_data if t == 'Income')
+    expense = sum(amount for t, amount in budget_data if t == 'Expense')
+    balance = income - expense
+    goal_amount = 500  # Example goal
+
+    # Fetch category-wise expenses
+    cursor.execute(
+        'SELECT category, SUM(amount) FROM budgets WHERE username = ? AND type = "Expense" GROUP BY category',
+        (username,))
+    category_data = cursor.fetchall()
+
+    categories = [row[0] for row in category_data]
+    category_expenses = [row[1] for row in category_data]
+
+    # Fetch monthly expense trend
+    cursor.execute(
+        'SELECT strftime("%Y-%m", date) AS month, SUM(amount) FROM budgets WHERE username = ? AND type = "Expense" GROUP BY month ORDER BY month',
+        (username,))
+    monthly_data = cursor.fetchall()
+    monthly_expenses = {row[0]: row[1] for row in monthly_data}
+
+    # Fetch all budget records for transactions table
+    cursor.execute('SELECT type, category, amount, description, date FROM budgets WHERE username = ?', (username,))
+    records = [
+        {
+            "type": row[0],
+            "category": row[1],
+            "amount": row[2],
+            "description": row[3] if row[3] else "No description",
+            "date": row[4]
+        } for row in cursor.fetchall()
+    ]
+
+    conn.close()
+
+    return jsonify({
+        "status": "success",
+        "income": income,
+        "expense": expense,
+        "balance": balance,
+        "goal_amount": goal_amount,
+        "categories": categories,
+        "category_expenses": category_expenses,
+        "monthly_expenses": monthly_expenses,
+        "records": records  # ✅ This was missing before
+    })
 
 
 @app.route('/chat', methods=['POST'])
@@ -139,6 +253,7 @@ def chat():
 
     # Prompt for GPT-3.5
     prompt = (
+        f"{user_message}\n"
         f"Here is the user's historical budget data:\n"
         f"{formatted_budget_data}\n\n"
         "Based on this data, recommend a plan for better budget management. List only 3 "
@@ -178,7 +293,7 @@ def login():
         if user:
             session['username'] = username
             flash('Login successful!', 'success')
-            return redirect(url_for('index'))
+            return redirect(url_for('main'))
         else:
             flash('Invalid username or password.', 'danger')
 
@@ -189,12 +304,14 @@ def register():
     """Handle user registration without password hashing."""
     if request.method == 'POST':
         username = request.form['username']
+        fullname = request.form['fullname']
         password = request.form['password']
+
 
         conn = sqlite3.connect(DATABASE)
         cursor = conn.cursor()
         try:
-            cursor.execute('INSERT INTO users (username, password) VALUES (?, ?)', (username, password))
+            cursor.execute('INSERT INTO users (username, fullname,password) VALUES (?, ?)', (username, password,fullname))
             conn.commit()
             flash('Registration successful!', 'success')
             return redirect(url_for('login'))
@@ -246,5 +363,5 @@ def add_record():
         return jsonify({"status": "error", "message": "Failed to add record"}), 500
 
 if __name__ == '__main__':
-    init_db()
+    # init_db()
     app.run(debug=True)
