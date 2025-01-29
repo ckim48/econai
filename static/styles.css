@@ -1,8 +1,15 @@
 body {
-    background-color: #f8f9fa;
+    background-color: #EEF2FF;
+
 }
 h1,h2,h3,h4,h5,h6{
           background: linear-gradient(45deg, #6a11cb, #2575fc); /* Define the gradient */
+        -webkit-background-clip: text; /* Clip the gradient to the text */
+        -webkit-text-fill-color: transparent; /* Make the text fill transparent */
+        font-weight: bold;
+}
+.fancy-font{
+              background: linear-gradient(45deg, #6a11cb, #2575fc); /* Define the gradient */
         -webkit-background-clip: text; /* Clip the gradient to the text */
         -webkit-text-fill-color: transparent; /* Make the text fill transparent */
         font-weight: bold;
@@ -26,4 +33,7 @@ h1,h2,h3,h4,h5,h6{
 .btn-gradient:hover {
     background: linear-gradient(45deg, #2575fc, #6a11cb);
     color: #fff;
+}
+.btn{
+    padding: 10px 20px;
 }

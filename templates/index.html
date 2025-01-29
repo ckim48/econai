@@ -121,9 +121,17 @@
         color:black !important;
         text-decoration:none;
     }
-    .card-header h5{
+    .card {
+        background: rgba(255, 255, 255, 0.85); /* Semi-transparent background */
+        backdrop-filter: blur(10px); /* Soft blur effect */
+        border-radius: 15px;
+        box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+    }
+
+    .card-header h5 {
         font-size: 23px;
-        text-align:center;
+        text-align: center;
     }
     /* Styles for Income Events */
 .income-event {
@@ -177,78 +185,113 @@ a.fc-event{
 #calendar {
     width: 100%;
 }
-/* Ensures all chart cards have the same size */
+/* Chart Card Modern Design */
 .chart-card {
     width: 100%;
-    height: 400px; /* Set a consistent height */
+    height: 420px; /* Ensure uniform height */
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
-    background: white;
+    padding: 25px;
+    border-radius: 18px;
+    background: rgba(217, 226, 252, 0.45); /* Soft white with transparency */
+    backdrop-filter: blur(12px); /* Glass effect */
+    box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.1);
     position: relative;
     overflow: hidden;
+    transition: all 0.3s ease-in-out;
 }
 
-/* Ensure chart canvas adapts properly */
+/* Add a slight border gradient effect */
+.chart-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 18px;
+    padding: 2px;
+    background: linear-gradient(135deg, #455bea, #5468ff); /* Elegant gradient */
+    -webkit-mask: linear-gradient(white 0 0) content-box, linear-gradient(white 0 0);
+    mask-composite: exclude;
+}
+
+/* Title Styles */
+.chart-card .card-title {
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+/* Chart Canvas */
 .chart-card canvas {
     max-width: 100% !important;
     max-height: 100% !important;
     width: auto;
-    height: 300px !important; /* Ensure all charts have the same height */
+    height: 320px !important;
 }
 
-/* Responsive tweaks */
+
+
+/* Responsive Adjustments */
 @media (max-width: 992px) {
     .chart-card {
-        height: 350px; /* Reduce height for smaller screens */
+        height: 380px; /* Adjust height for tablets */
     }
 }
 
 @media (max-width: 768px) {
     .chart-card {
-        height: 320px; /* Further reduce height */
+        height: 350px; /* Further adjust height for mobile */
     }
 }
-
+canvas {
+    pointer-events: auto;
+}
 </style>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
+
 <div class="container mt-5">
-    <h1 class="text-center mb-5 text-gradient">Financial overview for {{ fullname }}</h1>
+    <h1  style="color:black !important; background:none;-webkit-background-clip: initial;-webkit-text-fill-color: initial;" class="text-center mb-5 text-gradient" data-aos="fade-down" data-aos-duration="1000">Financial overview for <span class="fancy-font">{{ fullname }}</span> </h1>
 <div class="row g-4">
     <!-- Left Column: Balance Card + Add Record -->
-    <div class="col-lg-4 d-flex justify-content-center">
-        <div class="card shadow-lg border-0 position-relative mx-auto" style="width: 100%; max-width: 350px; background-color: #fdfdfd;">
-            <div class="card-body text-center">
-                <h5 class="text-muted">Total Balance</h5>
-                <h2 class="text-gradient fw-bold">${{ balance }}</h2>
-                <div class="d-flex justify-content-around mt-4">
-                    <div>
-                        <h6 class="text-muted">Income</h6>
-                        <p class="text-success fw-bold">${{ income }}</p>
-                    </div>
-                    <div>
-                        <h6 class="text-muted">Expense</h6>
-                        <p class="text-danger fw-bold">${{ expense }}</p>
-                    </div>
+<div class="col-lg-4 d-flex justify-content-center">
+    <div data-aos="flip-right" data-aos-duration="1000"
+        class="card shadow-lg border-0 position-relative mx-auto"
+        style="width: 100%; max-width: 350px; background-color: #fdfdfd;">
+        <div class="card-body text-center">
+            <h5 class="text-muted"   style="color:black !important; background:none;-webkit-background-clip: initial;-webkit-text-fill-color: initial;">Total Balance</h5>
+            <h2 class="text-gradient fw-bold">${{ balance }}</h2>
+            <div class="d-flex justify-content-around mt-5">
+                <div>
+                    <h6 class="text-muted">Income</h6>
+                    <p class="text-success fw-bold">${{ income }}</p>
                 </div>
-                            <button
-                class="btn btn-gradient btn-sm rounded-pill shadow-sm m-3"
+                <div>
+                    <h6 class="text-muted">Expense</h6>
+                    <p class="text-danger fw-bold">${{ expense }}</p>
+                </div>
+            </div>
+
+
+
+
+            <button class="btn btn-gradient btn-sm rounded-pill shadow-sm m-3"
                 data-bs-toggle="modal"
                 data-bs-target="#addRecordModal">
                 + Add Record
             </button>
-            </div>
         </div>
     </div>
+</div>
+
 
     <!-- Middle Column: Goal Progress -->
     <div class="col-lg-4 d-flex justify-content-center">
-        <div class="card shadow-lg border-0 mx-auto" style="width: 100%; max-width: 350px; background-color: #fdfdfd;">
+        <div data-aos="flip-right" data-aos-duration="1000" class="card shadow-lg border-0 mx-auto" style="width: 100%; max-width: 350px; background-color: #fdfdfd;">
             <div class="card-body text-center">
-                <h5 class="text-muted">💰 Savings Goal</h5>
+                <h5 class="text-muted"   style="color:black !important; background:none;-webkit-background-clip: initial;-webkit-text-fill-color: initial;">💰 Savings Goal</h5>
                 <h2 class="fw-bold text-primary">$<span id="goalAmount">{{ goal_amount }}</span></h2>
                 <p class="text-muted small">Your progress towards your financial goal</p>
 
@@ -273,25 +316,37 @@ a.fc-event{
                 </div>
 
                 <!-- Button to Open Goal Setting Modal -->
-                <button class="btn btn-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#setGoalModal">
+                <button class="btn btn-gradient  rounded-pill s btn-sm btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#setGoalModal">
                     Set Goal
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Right Column: Spending Insights -->
-    <div class="col-lg-4 d-flex justify-content-center">
-        <div class="card shadow-lg border-0 mx-auto" style="width: 100%; max-width: 350px; background-color: #fdfdfd;">
-            <div class="card-body text-center">
-                <h5 class="text-muted">📊 Top Expense Category</h5>
-                <h2 class="fw-bold text-danger mt-4" id="topExpenseCategory">Loading...</h2>
-                <p class="text-muted small">Your highest spending category</p>
+<div class="col-lg-4 d-flex justify-content-center">
+    <div data-aos="flip-right" data-aos-duration="1000"
+        class="card shadow-lg border-0 mx-auto"
+        style="width: 100%; max-width: 350px; background-color: #fdfdfd;">
+        <div class="card-body text-center">
+            <h5 class="text-muted mb-3"   style="color:black !important; background:none;-webkit-background-clip: initial;-webkit-text-fill-color: initial;">Overview</h5>
+            <h6 class="mt-4">Top Expense Category</h6>
+            <p class="fw-bold text-danger " id="topExpenseCategory">Loading...</p>
+<!--            <p class="text-muted small">Your highest spending category</p>-->
 
-                <button class="btn btn-danger btn-sm mt-2" onclick="showSpendingDetails()">View Insights</button>
+            <div class="">
+                <h6 class="text-muted">Average Daily Spending</h6>
+                <p class="fw-bold text-danger">${{ avg_daily_spending }}</p>
             </div>
+
+
+
+            <a href="#dashboard">
+                <button class="btn btn-gradient rounded-pill s btn-sm btn-sm mt-2">View Insights</button>
+            </a>
         </div>
     </div>
+</div>
+
 </div>
 </div>
 
@@ -321,12 +376,12 @@ a.fc-event{
 
 
 <div class="d-flex justify-content-center mt-4">
-    <h3 class="section-title">Your Financial Overview</h3>
+    <h3 class="section-title"  data-aos="fade-down" data-aos-duration="1000" >Your Financial Overview</h3>
 </div>
 
 <div class="row mt-4">
     <div class="col-lg-12 d-flex justify-content-center">
-        <div class="btn-group" role="group">
+        <div class="btn-group" role="group"  data-aos="zoom-in" data-aos-duration="1000">
             <button class="tab-btn active" id="transactions-tab-btn" type="button">
                 📊 Transactions
             </button>
@@ -341,7 +396,7 @@ a.fc-event{
 <!-- Transactions and Calendar Section -->
 <div class="row g-4 mt-3">
     <div class="col-lg-12">
-        <div class="card supard shadow-lg border-0 mb-5 d-block mx-auto" style="width:81%;">
+        <div  data-aos="flip-right" data-aos-duration="1000"  class="card supard shadow-lg border-0 mb-5 d-block mx-auto" style="width:81%;">
             <div class="card-body">
                 <!-- Transactions Table Tab -->
                 <div id="transactions-section">
@@ -389,9 +444,13 @@ a.fc-event{
     </div>
 </div>
 
+<div id="dashboard" class="d-flex justify-content-center mt-4">
+    <h3 class="section-title"  data-aos="fade-down" data-aos-duration="1000" >Personal Analysis</h3>
+</div>
+
 <div class="row mt-4">
     <div class="col-lg-6 col-md-12 d-flex">
-        <div class="chart-card card shadow-lg border-0">
+        <div class="chart-card card shadow-lg border-0" data-aos="fade-right" data-aos-duration="1000">
             <div class="card-body">
                 <h5 class="card-title text-center fw-bold mb-3">Income vs. Expenses</h5>
                 <canvas id="incomeExpenseChart"></canvas>
@@ -400,18 +459,18 @@ a.fc-event{
     </div>
 
     <div class="col-lg-6 col-md-12 d-flex">
-        <div class="chart-card card shadow-lg border-0">
+        <div class="chart-card card shadow-lg border-0" data-aos="fade-left" data-aos-duration="1000">
             <div class="card-body">
-                <h5 class="card-title text-center fw-bold mb-3">Category-wise Expense Breakdown</h5>
+<h5 class="card-title text-center fw-bold mb-3">Top 3 Category-wise Expense Breakdown</h5>
                 <canvas id="categoryExpenseChart"></canvas>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row mt-4">
+<div class="row mt-4 mb-5">
     <div class="col-lg-6 col-md-12 d-flex">
-        <div class="chart-card card shadow-lg border-0">
+        <div class="chart-card card shadow-lg border-0" data-aos="fade-right" data-aos-duration="1000">
             <div class="card-body">
                 <h5 class="card-title text-center fw-bold mb-3">Monthly Expense Trend</h5>
                 <canvas id="monthlyExpenseChart"></canvas>
@@ -420,7 +479,7 @@ a.fc-event{
     </div>
 
     <div class="col-lg-6 col-md-12 d-flex">
-        <div class="chart-card card shadow-lg border-0">
+        <div class="chart-card card shadow-lg border-0" data-aos="fade-left" data-aos-duration="1000">
             <div class="card-body">
                 <h5 class="card-title text-center fw-bold mb-3">Savings Progress</h5>
                 <canvas id="savingsProgressChart"></canvas>
@@ -837,21 +896,40 @@ document.addEventListener("DOMContentLoaded", async function () {
                     backgroundColor: ["#28a745", "#dc3545"]
                 }]
             },
-            options: { responsive: true }
+            options: { responsive: true ,
+            plugins: { legend: { display: false } }
+            }
         });
+let sortedData = categories.map((category, index) => ({
+    category: category,
+    expense: category_expenses[index]
+})).sort((a, b) => b.expense - a.expense).slice(0, 3);
 
-        // ✅ 2. Category-wise Expense Breakdown (Pie Chart)
-        new Chart(document.getElementById("categoryExpenseChart"), {
-            type: "pie",
-            data: {
-                labels: categories,
-                datasets: [{
-                    data: category_expenses,
-                    backgroundColor: ["#ff6384", "#36a2eb", "#ffce56", "#4bc0c0", "#9966ff"]
-                }]
-            },
-            options: { responsive: true }
-        });
+// Extract top 7 categories and expenses
+let topCategories = sortedData.map(item => item.category);
+let topExpenses = sortedData.map(item => item.expense);
+
+// ✅ 2. Category-wise Expense Breakdown (Bar Chart - Top 7)
+new Chart(document.getElementById("categoryExpenseChart"), {
+    type: "bar",
+    data: {
+        labels: topCategories,
+        datasets: [{
+            data: topExpenses,
+            backgroundColor: ["#ff6384", "#36a2eb", "#ffce56", "#4bc0c0", "#9966ff", "#ff9f40", "#8d44ad"]
+        }]
+    },
+    options: {
+    responsive: true,
+    interaction: {
+        mode: 'nearest', // Ensures tooltip activates on nearest point
+        intersect: false
+    },
+        plugins: {
+            legend: { display: false }
+        }
+    }
+});
 
         // ✅ 3. Monthly Expense Trend (Line Chart)
         new Chart(document.getElementById("monthlyExpenseChart"), {
@@ -865,7 +943,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     fill: false
                 }]
             },
-            options: { responsive: true }
+            options: { responsive: true,
+            plugins: { legend: { display: false } }}
         });
 
         // ✅ 4. Savings Progress (Doughnut Chart)
@@ -878,7 +957,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     backgroundColor: ["#28a745", "#f8d7da"]
                 }]
             },
-            options: { responsive: true }
+            options: { responsive: true,
+            }
         });
 
     } catch (error) {

@@ -3,6 +3,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import sqlite3
 from openai import OpenAI
+from datetime import datetime
+from calendar import monthrange
 
 # OpenAI client initialization
 
@@ -70,8 +72,6 @@ def init_db():
 @app.route('/')
 def index():
     return render_template('landing.html')
-
-
 @app.route('/main')
 def main():
     """Render the main dashboard with balance and records."""
@@ -92,9 +92,34 @@ def main():
     expense = sum(amount for t, amount in budget_data if t == 'Expense')
     balance = income - expense
 
-    # Set a goal amount (you can modify this to be user-defined)
-    goal_amount = 500  # Example: Set a default goal
-    progress_percentage = min(int((balance / goal_amount) * 100), 100)
+    # Fix datetime usage
+    today = datetime.today().strftime('%Y-%m-%d')
+
+    cursor.execute('''
+        SELECT SUM(amount) FROM budgets
+        WHERE username = ? AND type = 'Expense' AND strftime('%Y-%m', date) = strftime('%Y-%m', ?)
+    ''', (username, today))
+    monthly_expense = cursor.fetchone()[0] or 0
+    monthly_remaining = balance - monthly_expense
+
+    cursor.execute('''
+        SELECT SUM(amount) FROM budgets
+        WHERE username = ? AND type = 'Expense' AND date BETWEEN date(?, '-7 days') AND ?
+    ''', (username, today, today))
+    weekly_expense = cursor.fetchone()[0] or 0
+    weekly_remaining = balance - weekly_expense
+
+    # Calculate daily spending and remaining days in the month
+    cursor.execute('''
+        SELECT SUM(amount) FROM budgets
+        WHERE username = ? AND type = 'Expense' AND strftime('%Y-%m-%d', date) = ?
+    ''', (username, today))
+    daily_expense = cursor.fetchone()[0] or 0
+
+    current_day = int(datetime.today().strftime('%d'))
+    days_in_month = monthrange(datetime.today().year, datetime.today().month)[1]
+    days_left = days_in_month - current_day
+    avg_daily_spending = round(monthly_expense / current_day, 2) if current_day > 0 else 0
 
     # Fetch all records for the calendar
     cursor.execute('SELECT type, category, amount, description, date FROM budgets WHERE username = ?', (username,))
@@ -116,10 +141,16 @@ def main():
         expense=expense,
         records=records,
         username=username,
-        goal_amount=goal_amount,
-        fullname= fullname,
-        progress_percentage=progress_percentage
+        goal_amount=500,  # Example goal
+        fullname=fullname,
+        progress_percentage=min(int((balance / 500) * 100), 100),
+        monthly_remaining=monthly_remaining,
+        weekly_remaining=weekly_remaining,
+        avg_daily_spending=avg_daily_spending,
+        days_left=days_left
     )
+
+
 @app.route('/set_goal', methods=['POST'])
 def set_goal():
     """Update the user's goal amount and return progress."""
@@ -254,9 +285,8 @@ def chat():
     # Prompt for GPT-3.5
     prompt = (
         f"{user_message}\n"
-        f"Here is the user's historical budget data:\n"
-        f"{formatted_budget_data}\n\n"
-        "Based on this data, recommend a plan for better budget management. List only 3 "
+        f"if {user_message} is asking that some thing like am i doing good/well?. Then response it based on {formatted_budget_data} with only maximum 3 sentences. Do not start with based on.\n\n"
+        "Otherwise on {formatted_budget_data}, recommend a plan for better budget management. List only 3. For this case you can start with based on "
         "Suggest areas to reduce spending and how to optimize their budget for saving more."
     )
 
